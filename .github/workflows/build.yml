@@ -1,0 +1,50 @@
+name: Build
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repo
+      uses: actions/checkout@v3
+
+    - name: Configure git
+      run: |
+        git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+        git config --global user.name "github-actions[bot]"
+
+    - name: Clone zxingcpp repo
+      run: git clone https://github.com/zxing-cpp/zxing-cpp -b v2.2.1
+
+    - name: Apply patches
+      working-directory: zxing-cpp
+      run: git am $GITHUB_WORKSPACE/patches/*.patch
+
+    - name: Setup JDK 17
+      uses: actions/setup-java@v3
+      with:
+        distribution: 'zulu'
+        java-version: 17
+        cache: 'gradle'
+
+    - name: Build
+      working-directory: zxing-cpp/wrappers/android
+      run: |
+        rm -rf $GITHUB_WORKSPACE/.m2 || true
+        ./gradlew \
+          -Dgradle.user.home=$GITHUB_WORKSPACE/.gradle \
+          -Dmaven.repo.local=$GITHUB_WORKSPACE/.m2 \
+          zxingcpp:publishToMavenLocal
+
+    - name: Commit changes
+      run: |
+        git add .m2
+        git commit -m "Publish maven artifacts" || true
+
+    - name: Push changes to repo
+      uses: ad-m/github-push-action@master
+      with:
+        branch: ${{ github.ref }}
