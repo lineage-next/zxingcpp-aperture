@@ -17,11 +17,7 @@ jobs:
         git config --global user.name "github-actions[bot]"
 
     - name: Clone zxingcpp repo
-      run: git clone https://github.com/zxing-cpp/zxing-cpp --recursive -b v2.2.1
-
-    - name: Apply patches
-      working-directory: zxing-cpp
-      run: git am $GITHUB_WORKSPACE/patches/*.patch
+      run: git clone https://github.com/zxing-cpp/zxing-cpp --recursive -b v2.3.0
 
     - name: Setup JDK 17
       uses: actions/setup-java@v3
